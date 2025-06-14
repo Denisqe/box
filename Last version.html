@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <button id="pair">Присоединить устройство</button>
+  <h1>Пульс:<div id="heartRate">--</div></h1> 
+  <div>Таймер:</div>
+  <h2 id="timer">00:00:00</h2>
+  <div>
+    <div>Предстартовый уровень ЧСС:</div>
+    <input type="number" placeholder="ПУ ЧСС" id="preLevelHb" name="preLevel">
+    <button id="entInfBtn" disabled>Ввод</button>
+  </div>
+  <div>|</div>
+  <button id="startBtn" disabled>Начало работы</button>
+  <button id="vosstBtn" disabled>Восстановление</button>
+  <button id="offBtn" disabled>Конец</button>
+  <div>
+    <div style="display:inline-block">
+      <div>Таблица 1</div>
+      <table border="1" style="border-collapse:collapse; display:inline-table;" id="heartRateTable">
+        <tr><th>Время</th><th>ЧСС</th></tr>
+      </table>
+    </div>
+    <div style="display:inline-block">
+      <div>Таблица 2</div>
+      <table border="1" style="border-collapse:collapse; display:inline-table; margin-left: 20px" id="tableResults">
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Среднее ЧСС работы</td><td id="averageWorkHb_1">данные</td></tr>
+        <tr><td>Среднее ЧСС восстановления</td><td id="averageRelaxHb_1">данные</td></tr>
+        <tr><td>Среднее ЧСС работы + восстановления</td><td id="averageFullHb_1">данные</td></tr>
+        <tr><td>Пульсовой приход (пульсовая сумма за время работы)</td><td id="pulseParish_1">данные</td></tr>
+        <tr><td>Пульсовой долг (пульсовая сумма за время восстановления)</td><td id="pulseDebt_1">данные</td></tr>
+        <tr><td>Пульсовая сумма запроса (ПСЗ)</td><td id="pulseReq_1">данные</td></tr>
+        <tr><td style="background: rgb(243, 6, 6)">ИНПД</td><td id="intensyAccum_1">данные</td></tr>
+        <tr><td style="background: rgb(243, 6, 6)">Скорость образования пульсового запроса (СОПЗ)</td><td id="speedPulseRequest_1">данные</td></tr>
+        <tr><td>Пульсовой резерв = ЧССмакс - ЧССпу</td><td id="pulseReserve_1">данные</td></tr>
+        <tr><td style="background: rgb(243, 6, 6)">УИФЗ = СОПЗ/Пульсовой резерв</td><td id="specIntens_1">данные</td></tr>
+        <tr><td style="background: rgb(243, 6, 6)">Анаэробность %</td><td id="anaerob_1">данные</td></tr>
+        <tr><td style="background: rgb(243, 6, 6)">Ан. часть дозы нагрузки </td><td id="anaerobPart_1">данные</td></tr>
+        <tr><td>Макс. ЧСС</td><td id="MaxHb_1">данные</td></tr>
+        <tr><td>Время работы (мин)</td><td id="workTime_1">данные</td></tr>
+        <tr><td>Время восстановления (мин)</td><td id="relaxTime_1">данные</td></tr>
+      </table>
+        <button id="copyText1">Копировать таблицу 1</button>
+        <button id="copyText">Копировать таблицу 2</button>
+    </div>
+  </div>
+
+
+  <script>
+    window.onload = () => {
+      //Кнопки
+      const pairButton = document.getElementById('pair') //соединение
+      const timer = document.getElementById('timer');
+      const startBtn = document.getElementById('startBtn');
+      const offBtn = document.getElementById('offBtn');
+      const vosstBtn = document.getElementById('vosstBtn');
+
+
+      var heartBeat = 'Соединение...'; //Количество ударов в минуту
+      let globalTime //Время в виде строки
+      
+      //Секунды минуты часы в еденицах
+      let seconds = 0;
+      let minutes = 0;
+      let hours = 0;
+
+      //время работы и восстановления
+      let workTime1 = 0;
+      let relaxTime1 = 0;
+
+      let maxHb = 0; //Макс ЧСС
+
+      let preLevel //предстартовый уровень ЧСС
+
+      let averageWorkHb //Среднее ЧСС работы
+      let averageRelaxHb //Среднее ЧСС восст
+      let averageFullHb //Среднее ЧСС работы и восст
+      let pulseParish //пульсовой приход
+      let pulseDebt //пульсовой долг
+      let pulseReq //пульсовой запрос
+      let intensyAccum //ИНПД
+      let speedPulseRequest //СОПЗ
+      let pulseReserve //Пульсовой резерв
+      let specIntens //УИФЗ
+      let anaerob //анаэробность
+      let anaerobPart //анаэробная часть 
+
+      let i = 0;
+      let summHb = 0;
+
+      
+
+      /* Кнопка копирования таблиц */
+      var text = document.getElementById("tableResults");
+      var btn = document.getElementById("copyText");
+      var text1 = document.getElementById("heartRateTable");
+      var btn1 = document.getElementById("copyText1");
+
+      function selectElementContents(el) {
+      var body = document.body, range, sel;
+      if (document.createRange && window.getSelection) {
+          range = document.createRange();
+          sel = window.getSelection();
+          sel.removeAllRanges();
+          try {
+              range.selectNodeContents(el);
+              sel.addRange(range);
+          } catch (e) {
+              range.selectNode(el);
+              sel.addRange(range);
+          }
+      } else if (body.createTextRange) {
+          range = body.createTextRange();
+          range.moveToElementText(el);
+          range.select();
+      }
+      document.execCommand("Copy");}
+
+      btn.addEventListener('click', () => selectElementContents(text)); 
+      btn1.addEventListener('click', () => selectElementContents(text1)); 
+
+
+      parseValue = (value) => {
+        // В Chrome 50+ используется DataView.
+        value = value.buffer ? value : new DataView(value);
+        let flags = value.getUint8(0);
+
+        // Определяем формат
+        let rate16Bits = flags & 0x1;
+        let result = {};
+        let index = 1;
+
+        // Читаем в зависимости от типа
+        if (rate16Bits) {
+          result.heartRate = value.getUint16(index, /*littleEndian=*/true);
+          index += 2;
+        } else {
+          result.heartRate = value.getUint8(index);
+          index += 1;
+        }
+      
+        // RR интервалы
+        let rrIntervalPresent = flags & 0x10;
+        if (rrIntervalPresent) {
+          let rrIntervals = [];
+          for (; index + 1 < value.byteLength; index += 2) {
+            rrIntervals.push(value.getUint16(index, /*littleEndian=*/true));
+          }
+          result.rrIntervals = rrIntervals;
+        }
+
+        return result;
+      }
+
+      pairButton.addEventListener('pointerup', function(event) {
+
+        navigator.bluetooth.requestDevice({
+            filters: [{ services: ['heart_rate'] }]
+          })
+          .then((device) => {
+            return device.gatt.connect();
+          })
+          .then(server => {
+            return server.getPrimaryService('heart_rate');
+          })
+          .then(service => {
+            return service.getCharacteristic('heart_rate_measurement');
+          })
+          .then(characteristic => characteristic.startNotifications())
+          .then(characteristic => {
+            characteristic.addEventListener('characteristicvaluechanged', handleCharacteristicValueChanged);
+            entInfBtn.disabled = false;
+
+          })
+          .catch(error => { console.log(error); });
+
+          //Функция обновления ЧСС при изменении
+          function handleCharacteristicValueChanged(event) {
+            var value = event.target.value;
+            heartBeat = parseValue(value).heartRate
+            document.getElementById('heartRate').innerHTML=heartBeat;
+          }
+
+          //Функционал секундомера
+          function updateTime() {
+            seconds++;
+            if (seconds === 60) {
+              minutes++;
+              seconds = 0;
+            }
+            if (minutes === 60) {
+              hours++;
+              minutes = 0;
+            }
+            timer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            globalTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            //запись каждую секунду ЧСС и времени в таблицу
+            document.getElementById('heartRateTable').innerHTML = document.getElementById('heartRateTable').innerHTML + `<tr><td>${globalTime}</td><td>${heartBeat}</td></tr>`;
+
+            //выявляем макс ЧСС каждую секунду
+            if (heartBeat>maxHb) maxHb = heartBeat;
+          }
+
+          function averageHbCounter() {
+            summHb = summHb + heartBeat;
+            i++;
+          }
+
+          entInfBtn.addEventListener('click', () => {
+            preLevel = document.getElementById('preLevelHb').value;
+            
+
+            startBtn.disabled = false;
+            entInfBtn.disabled = true;
+          });
+
+          //Нажатие кнопки старт
+          startBtn.addEventListener('click', () => {
+            startBtn.disabled = true; //блок кнопки старт
+
+              document.getElementById('heartRateTable').innerHTML = "<tr><th>Время</th><th>ЧСС</th></tr>"; //Обнулить таблицу при новой записи
+              interval = setInterval(updateTime, 1000); //Запуск глобального секундомера
+              hbCounter = setInterval(averageHbCounter, 1000) //Запуск подсчёта среднего ЧСС
+            
+            vosstBtn.disabled = false; //открываем кнопку восстановления
+          });
+          
+          //Нажатие кнопки восстановления
+          vosstBtn.addEventListener('click', () => {
+            vosstBtn.disabled = true; //блок кнопки восстановления
+      
+            clearInterval(hbCounter); //Останавливаем счётчик среднего ЧСС
+            averageWorkHb = summHb/i; //Рассчёт среднего ЧСС работы 
+
+            document.getElementById('averageWorkHb_1').innerHTML = averageWorkHb;
+
+            workTime1 = hours*60 + minutes + seconds/60; //время работы 1 ступени в минутах
+
+            i = 0;
+            summHb = 0;
+            hbCounter = setInterval(averageHbCounter, 1000) //обнуляем счётчики и запускаем по новой для рассчёта среднего ЧСС восстановления 1 ступени
+          });
+
+          //Нажатие кнопки конец
+          offBtn.addEventListener('click', () => {
+            clearInterval(interval);
+            clearInterval(hbCounter);
+
+            //Рассчет параметров 1 ступени
+              averageRelaxHb = summHb/i; //среднее ЧСС восстановления
+              averageFullHb = (averageWorkHb+averageRelaxHb)/2; //среднее ЧСС работы+восстановления
+              relaxTime1 = (hours*60 + minutes + seconds/60) - workTime1; //время восстановления 1 ступени в минутах
+              pulseParish = (averageWorkHb - preLevel)*workTime1; //Пульсовой приход
+              pulseDebt = (averageRelaxHb - preLevel)*relaxTime1; //Пульсовой долг
+              pulseReq = pulseDebt + pulseParish; //Пульсовой запрос
+              intensyAccum = pulseDebt/(workTime1*60); //ИНПД
+              speedPulseRequest = pulseReq/workTime1; //СОПЗ
+              pulseReserve = maxHb - preLevel; //Пульсовой резерв
+              specIntens = speedPulseRequest/pulseReserve; //УИФЗ
+              anaerob = pulseDebt/pulseReq; //Процент АНАЭРОБНОСТИ
+              anaerobPart = workTime1*anaerob*specIntens; //Анаэробная часть дозы
+
+              //Запись данных в форму hmtl
+              document.getElementById('averageRelaxHb_1').innerHTML = averageRelaxHb;
+              document.getElementById('averageFullHb_1').innerHTML = averageFullHb;
+              document.getElementById('pulseParish_1').innerHTML = pulseParish;
+              document.getElementById('pulseDebt_1').innerHTML = pulseDebt;
+              document.getElementById('pulseReq_1').innerHTML = pulseReq;
+              document.getElementById('intensyAccum_1').innerHTML = intensyAccum.toFixed(2);
+              document.getElementById('speedPulseRequest_1').innerHTML = speedPulseRequest;
+              document.getElementById('pulseReserve_1').innerHTML = pulseReserve;
+              document.getElementById('specIntens_1').innerHTML = specIntens.toFixed(3);
+              document.getElementById('anaerob_1').innerHTML = anaerob.toFixed(3);
+              document.getElementById('anaerobPart_1').innerHTML = anaerobPart.toFixed(3);
+              document.getElementById('speedPulsePreHb_1').innerHTML = (speedPulseRequest/preLevel).toFixed(3);
+              document.getElementById('MaxHb_1').innerHTML = maxHb;
+              document.getElementById('workTime_1').innerHTML = workTime1;
+              document.getElementById('relaxTime_1').innerHTML = relaxTime1;
+
+            //обнуление таймера
+            seconds = 0;
+            minutes = 0;
+            hours = 0;
+            timer.textContent = '00:00:00';
+
+            offBtn.disabled = true;
+          });
+      });
+    }
+  </script>
+</body>
+</html>
