@@ -7,29 +7,20 @@
   <title>Document</title>
 </head>
 <body>
-  <button id="pair">Присоединить устройство</button>
-  <h1>Пульс:<div id="heartRate">--</div></h1> 
-  <div>Таймер:</div>
-  <h2 id="timer">00:00:00</h2>
-  <div>
-    <div>Предстартовый уровень ЧСС:</div>
-    <input type="number" placeholder="ПУ ЧСС" id="preLevelHb" name="preLevel">
-    <button id="entInfBtn" disabled>Ввод</button>
-  </div>
-  <div>|</div>
-  <button id="startBtn" disabled>Начало работы</button>
-  <button id="vosstBtn" disabled>Восстановление</button>
-  <button id="offBtn" disabled>Конец</button>
   <div>
     <div style="display:inline-block">
-      <div>Таблица 1</div>
-      <table border="1" style="border-collapse:collapse; display:inline-table;" id="heartRateTable">
-        <tr><th>Время</th><th>ЧСС</th></tr>
-      </table>
-    </div>
-    <div style="display:inline-block">
-      <div>Таблица 2</div>
       <table border="1" style="border-collapse:collapse; display:inline-table; margin-left: 20px" id="tableResults">
+        <tr><th><button id="pair">Присоединить устройство</button></th><th>Пульс</th></tr>
+        <tr><th>Предстартовый уровень ЧСС</th><th rowspan="2"><h1><div id="heartRate">--</div></h1></th></tr>
+        <tr><th><input type="number" placeholder="ПУ ЧСС" id="preLevelHb" name="preLevel"><button id="entInfBtn" disabled>Ввод</button></th></tr>
+        <tr>
+          <th>
+            <button id="startBtn" disabled>Начало работы</button>
+            <button id="vosstBtn" disabled>Восстановление</button>
+            <button id="offBtn" disabled>Конец</button>
+          </th>
+          <th><h2 id="timer">00:00:00</h2></th>
+        </tr>
         <tr><th>Параметр</th><th>Значение</th></tr>
         <tr><td>Среднее ЧСС работы</td><td id="averageWorkHb_1">данные</td></tr>
         <tr><td>Среднее ЧСС восстановления</td><td id="averageRelaxHb_1">данные</td></tr>
@@ -46,10 +37,17 @@
         <tr><td>Макс. ЧСС</td><td id="MaxHb_1">данные</td></tr>
         <tr><td>Время работы (мин)</td><td id="workTime_1">данные</td></tr>
         <tr><td>Время восстановления (мин)</td><td id="relaxTime_1">данные</td></tr>
+        <tr><th colspan="2"><button id="copyText">Копировать таблицу</button></th></tr>
       </table>
-        <button id="copyText1">Копировать таблицу 1</button>
-        <button id="copyText">Копировать таблицу 2</button>
     </div>
+
+    <div id="timerTable" style="display:none">
+      <table border="1" style="border-collapse:collapse; display:inline-table;" id="heartRateTable">
+        <tr><th colspan="2"><button id="copyText1">Копировать таблицу </button>
+        <tr><th>Время</th><th>ЧСС</th></tr>
+      </table>
+    </div>
+    
   </div>
 
 
@@ -161,6 +159,8 @@
 
       pairButton.addEventListener('pointerup', function(event) {
 
+        
+
         navigator.bluetooth.requestDevice({
             filters: [{ services: ['heart_rate'] }]
           })
@@ -224,6 +224,7 @@
           //Нажатие кнопки старт
           startBtn.addEventListener('click', () => {
             startBtn.disabled = true; //блок кнопки старт
+            document.getElementById('timerTable').style.display = "inline-block"
 
               document.getElementById('heartRateTable').innerHTML = "<tr><th>Время</th><th>ЧСС</th></tr>"; //Обнулить таблицу при новой записи
               interval = setInterval(updateTime, 1000); //Запуск глобального секундомера
